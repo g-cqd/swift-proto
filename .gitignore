@@ -1,0 +1,13 @@
+.DS_Store
+**/.DS_Store
+.swiftpm/
+**/.swiftpm/
+.build*/
+.build/
+**/.build/
+**/.build*/
+
+.vscode/
+
+.gitignored
+.gitignored/**

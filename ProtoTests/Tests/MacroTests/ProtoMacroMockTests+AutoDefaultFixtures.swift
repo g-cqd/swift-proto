@@ -1,0 +1,3 @@
+extension ProtoMacroMockTests {
+    enum AutoDefaultFixture {}
+}
