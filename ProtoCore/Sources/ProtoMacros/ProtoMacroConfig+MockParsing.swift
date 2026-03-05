@@ -23,6 +23,9 @@ extension ProtoMacroConfig {
     /// - `.custom("X")` → append `"X"` to compilation conditions
     /// - `.expr("X && Y")` → append raw compilation condition expression
     /// - `.scope(.Y)` → set mock access level override
+    /// - `.auto` → enable auto-default returns for protocol-shaped types
+    /// - `.propertySetters` → generate setter methods for get-only properties (default)
+    /// - `.noPropertySetters` → suppress setter method generation
     static func parseMockOptions(
         _ arguments: LabeledExprListSyntax,
         state: inout ParsingState,
@@ -73,6 +76,10 @@ extension ProtoMacroConfig {
             state.mockCompilationConditions.append("RELEASE")
         case "auto":
             state.mockAutoDefault = true
+        case "propertySetters":
+            state.mockPropertySetters = true
+        case "noPropertySetters":
+            state.mockPropertySetters = false
         default:
             context.diagnose(
                 Diagnostic(

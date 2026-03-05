@@ -210,7 +210,8 @@ public struct ProtoMacro: PeerMacro {
             typeAliases: typeAliases,
             genericWhereClause: genericWhereClause,
             conformsTo: config.conformsTo,
-            mockAutoDefault: config.mockAutoDefault
+            mockAutoDefault: config.mockAutoDefault,
+            mockPropertySetters: config.mockPropertySetters
         )
         if config.mockCompilationConditions.isEmpty {
             declarations.append(mockDecl)
@@ -233,7 +234,8 @@ public struct ProtoMacro: PeerMacro {
         typeAliases: [String: TypeSyntax],
         genericWhereClause: GenericWhereClauseSyntax?,
         conformsTo: [String],
-        mockAutoDefault: Bool
+        mockAutoDefault: Bool,
+        mockPropertySetters: Bool
     ) -> DeclSyntax {
         let context = MockGenerator.GenerationContext(
             protocolName: protocolName,
@@ -243,6 +245,7 @@ public struct ProtoMacro: PeerMacro {
             requiresUncheckedSendable: !includeActorInheritance && conformsTo.contains("Sendable"),
             requiresSynchronizedState: !includeActorInheritance && conformsTo.contains("Sendable"),
             mockAutoDefault: mockAutoDefault,
+            mockPropertySetters: mockPropertySetters,
             genericParameterClause: typeInfo.genericParameterClause,
             genericWhereClause: genericWhereClause,
             isActorType: typeInfo.isActor,

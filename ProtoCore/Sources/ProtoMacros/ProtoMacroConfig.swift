@@ -14,7 +14,9 @@ import SwiftSyntaxMacros
 
 /// Configuration parsed from `@Proto(...)` macro arguments.
 /// Controls protocol generation behavior including member filtering,
-/// access level, generic constraints, conformances, and isolation.
+/// access level, generic constraints, conformances, isolation, and
+/// mock generation options (compilation conditions, auto-defaults,
+/// property setters).
 struct ProtoMacroConfig: Sendable {
     enum PrimaryTypeBehavior: Sendable {
         case unconstrained  // default — no primary associated types
@@ -72,6 +74,7 @@ struct ProtoMacroConfig: Sendable {
     let mockCompilationConditions: [String]
     let mockScope: MemberExtractor.AccessLevel?
     let mockAutoDefault: Bool
+    let mockPropertySetters: Bool
     let primaryBehavior: PrimaryTypeBehavior
     let whereClauseBehavior: WhereClauseBehavior
     let conformsTo: [String]

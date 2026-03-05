@@ -86,6 +86,8 @@ Used with ``ProtoOption/mock(_:)``:
 | ``ProtoMockOption/expr(_:)`` | Wrap mock declaration in `#if <expression>`. |
 | ``ProtoMockOption/scope(_:)`` | Override generated mock access level. |
 | ``ProtoMockOption/auto`` | Auto-return `*Mock()` for unstubbed protocol-shaped return types. |
+| ``ProtoMockOption/propertySetters`` | Generate setter methods for get-only properties (the default). |
+| ``ProtoMockOption/noPropertySetters`` | Suppress setter method generation for get-only properties. |
 
 When `.auto` is active, the generated protocol also inherits `Proto.Metatype`
 (a marker protocol) so downstream tooling can identify Proto-managed protocols

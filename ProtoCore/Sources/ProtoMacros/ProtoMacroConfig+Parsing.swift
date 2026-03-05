@@ -26,6 +26,7 @@ extension ProtoMacroConfig {
         mockCompilationConditions: [],
         mockScope: nil,
         mockAutoDefault: false,
+        mockPropertySetters: true,
         primaryBehavior: .unconstrained,
         whereClauseBehavior: .omit,
         conformsTo: [],
@@ -43,6 +44,7 @@ extension ProtoMacroConfig {
         var mockCompilationConditions = [String]()
         var mockScope: MemberExtractor.AccessLevel?
         var mockAutoDefault = false
+        var mockPropertySetters = true
         var primaryBehavior: PrimaryTypeBehavior = .unconstrained
         var whereClauseBehavior: WhereClauseBehavior = .omit
         var conformsTo = [String]()
@@ -60,6 +62,7 @@ extension ProtoMacroConfig {
                 mockCompilationConditions: mockCompilationConditions,
                 mockScope: mockScope,
                 mockAutoDefault: mockAutoDefault,
+                mockPropertySetters: mockPropertySetters,
                 primaryBehavior: primaryBehavior,
                 whereClauseBehavior: whereClauseBehavior,
                 conformsTo: conformsTo,

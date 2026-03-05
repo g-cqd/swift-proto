@@ -13,7 +13,14 @@ import SwiftSyntax
 // MARK: - Non-Function Stubs
 
 //
-// Generated stubs for properties, initializers, and subscripts fail fast via
+// Generated stubs for properties, initializers, and subscripts.
+//
+// Properties: By default, get-only properties receive private backing storage
+// and a setter method (e.g. `setName(_:)`). When `mockPropertySetters` is
+// false, or the property already has a setter, a failure stub or auto-default
+// is used instead. Mutable properties use a standard stored property stub.
+//
+// Initializers and subscripts: Fail fast via
 // `ProtoMockFailureHandling.fail(...)`. This records a `Testing` issue when
 // available and then terminates with `preconditionFailure`.
 
@@ -23,25 +30,46 @@ extension MockGenerator {
         mockName: String,
         visibilityKeyword: String?,
         mockIsActor: Bool,
-        mockAutoDefault: Bool = false
-    ) -> DeclSyntax? {
+        mockAutoDefault: Bool = false,
+        mockPropertySetters: Bool = true
+    ) -> [DeclSyntax] {
         guard let binding = variableDecl.bindings.first,
             let typeAnnotation = binding.typeAnnotation
         else {
-            return nil
+            return []
         }
 
         let name = binding.pattern.trimmedDescription
         let getterEffects = getterEffectSpecifiers(in: binding.accessorBlock)
         let hasSetter = binding.accessorBlock.map(ProtocolGenerator.accessorBlockHasSetter) ?? false
         let typeName = typeAnnotation.type.trimmedDescription
+        let needsBackingStorage = mockPropertySetters && !hasSetter
+        let hasDefaultExpr = mockAutoDefault ? autoDefaultExpression(for: typeName) : nil
+
+        var result: [DeclSyntax] = []
+
+        if needsBackingStorage {
+            result.append(renderBackingStorage(
+                propertyName: name,
+                typeName: typeName,
+                hasDefaultExpr: hasDefaultExpr
+            ))
+        }
 
         var transformedBinding = binding.trimmed
         transformedBinding.typeAnnotation = typeAnnotation
         transformedBinding.initializer = nil
         transformedBinding.trailingComma = nil
 
-        if mockAutoDefault, let defaultExpr = autoDefaultExpression(for: typeName) {
+        if needsBackingStorage {
+            transformedBinding.accessorBlock = backingStorageAccessorBlock(
+                propertyName: name,
+                typeName: typeName,
+                getterEffects: getterEffects,
+                mockName: mockName,
+                hasDefaultExpr: hasDefaultExpr
+            )
+        } else if mockAutoDefault, let defaultExpr = autoDefaultExpression(for: typeName) {
             transformedBinding.accessorBlock = autoDefaultAccessorBlock(
                 getterEffects: getterEffects,
                 hasSetter: hasSetter,
@@ -67,7 +95,83 @@ extension MockGenerator {
         declaration.bindings = PatternBindingListSyntax([transformedBinding])
         declaration.leadingTrivia = []
         declaration.trailingTrivia = []
-        return DeclSyntax(declaration)
+        result.append(DeclSyntax(declaration))
+
+        if needsBackingStorage {
+            result.append(renderPropertySetterMethod(
+                propertyName: name,
+                typeName: typeName,
+                getterEffects: getterEffects,
+                visibilityKeyword: visibilityKeyword
+            ))
+        }
+
+        return result
+    }
+
+    private static func renderBackingStorage(
+        propertyName: String,
+        typeName: String,
+        hasDefaultExpr: String?
+    ) -> DeclSyntax {
+        if let defaultExpr = hasDefaultExpr {
+            return DeclSyntax(stringLiteral: "private var _\(propertyName)Value: \(typeName) = \(defaultExpr)")
+        } else {
+            return DeclSyntax(stringLiteral: "private var _\(propertyName)Value: \(typeName)?")
+        }
+    }
+
+    private static func backingStorageAccessorBlock(
+        propertyName: String,
+        typeName: String,
+        getterEffects: AccessorEffectSpecifiersSyntax?,
+        mockName: String,
+        hasDefaultExpr: String?
+    ) -> AccessorBlockSyntax {
+        var getter = AccessorDeclSyntax(accessorSpecifier: .keyword(.get))
+        getter.effectSpecifiers = getterEffects
+
+        let getterBody: String
+        if hasDefaultExpr != nil {
+            getterBody = "{\n            _\(propertyName)Value\n        }"
+        } else {
+            let escapedPropertyName = escapeForStringLiteral(propertyName)
+            let escapedMockName = escapeForStringLiteral(mockName)
+            getterBody = "{\n"
+                + "            guard let value = _" + propertyName + "Value else {\n"
+                + "                ProtoMockFailureHandling.fail(\"Unstubbed property '" + escapedPropertyName + "' on " + escapedMockName + "\")\n"
+                + "            }\n"
+                + "            return value\n"
+                + "        }"
+        }
+
+        getter.body = CodeBlockSyntax(stringLiteral: getterBody)
+        getter.leadingTrivia = .newline + .spaces(8)
+
+        return AccessorBlockSyntax(
+            leftBrace: .leftBraceToken(leadingTrivia: .space),
+            accessors: .accessors(AccessorDeclListSyntax([getter])),
+            rightBrace: .rightBraceToken(leadingTrivia: .newline + .spaces(4))
+        )
+    }
+
+    private static func renderPropertySetterMethod(
+        propertyName: String,
+        typeName: String,
+        getterEffects: AccessorEffectSpecifiersSyntax?,
+        visibilityKeyword: String?
+    ) -> DeclSyntax {
+        let isAsync = getterEffects?.asyncSpecifier != nil
+
+        let visibilityPrefix = visibilityKeyword.map { "\($0) " } ?? ""
+        let setterName = "set\(propertyName.prefix(1).uppercased() + propertyName.dropFirst())"
+        let asyncKeyword = isAsync ? " async" : ""
+
+        let source = "\(visibilityPrefix)func \(setterName)(_ value: \(typeName))\(asyncKeyword) {\n"
+            + "        _\(propertyName)Value = value\n"
+            + "    }"
+
+        return DeclSyntax(stringLiteral: source)
     }
 
     static func renderInitializerStub(

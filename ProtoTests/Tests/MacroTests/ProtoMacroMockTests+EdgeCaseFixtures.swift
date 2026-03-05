@@ -66,10 +66,17 @@ extension ProtoMacroMockTests {
                     }
                     ProtoMockFailureHandling.fail("Unstubbed call to system on ThemeMock")
                 }
+                private var _nameValue: String?
                 var name: String {
                     get {
-                        ProtoMockFailureHandling.fail("Unstubbed property 'name' on ThemeMock")
+                        guard let value = _nameValue else {
+                            ProtoMockFailureHandling.fail("Unstubbed property 'name' on ThemeMock")
+                        }
+                        return value
                     }
+                }
+                func setName(_ value: String) {
+                    _nameValue = value
                 }
             }
             """
@@ -108,10 +115,17 @@ extension ProtoMacroMockTests {
                     self.incrementHandler = incrementHandler
                 }
 
+                private var _valueValue: Int?
                 public var value: Int {
                     get {
-                        ProtoMockFailureHandling.fail("Unstubbed property 'value' on CounterMock")
+                        guard let value = _valueValue else {
+                            ProtoMockFailureHandling.fail("Unstubbed property 'value' on CounterMock")
+                        }
+                        return value
                     }
+                }
+                public func setValue(_ value: Int) {
+                    _valueValue = value
                 }
                 public func increment() {
                     incrementCallCount += 1

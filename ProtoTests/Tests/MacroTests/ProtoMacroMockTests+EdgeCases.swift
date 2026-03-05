@@ -110,10 +110,17 @@ extension ProtoMacroMockTests {
                 }
 
                 final class StoreMock: StoreProtocol {
+                    private var _dataValue: String?
                     var data: String {
                         get async throws {
-                            ProtoMockFailureHandling.fail("Unstubbed property 'data' on StoreMock")
+                            guard let value = _dataValue else {
+                                ProtoMockFailureHandling.fail("Unstubbed property 'data' on StoreMock")
+                            }
+                            return value
                         }
+                    }
+                    func setData(_ value: String) async {
+                        _dataValue = value
                     }
                 }
                 """,

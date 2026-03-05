@@ -296,10 +296,14 @@ extension ProtoMacroMockTests.AutoDefaultFixture {
         }
 
         final class ServiceMock: ServiceProtocol {
+            private var _userValue: UserProtocol = UserMock()
             var user: UserProtocol {
                 get {
-                    return UserMock()
+                    _userValue
                 }
+            }
+            func setUser(_ value: UserProtocol) {
+                _userValue = value
             }
         }
         """

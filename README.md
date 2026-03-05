@@ -197,6 +197,8 @@ Used with `.mock(...)`.
 | `.expr("DEBUG && os(iOS)")` | Wrap mock declaration in `#if <expression>`. |
 | `.scope(...)` | Override generated mock access level. |
 | `.auto` | Auto-return `*Mock()` for unstubbed protocol-shaped return types. |
+| `.propertySetters` | Generate setter methods for get-only properties (the default). |
+| `.noPropertySetters` | Suppress setter method generation for get-only properties. |
 
 When multiple mock conditions are provided, Proto joins them with `||`. Use
 parentheses inside `.expr(...)` when precedence matters. Expressions must be
@@ -253,6 +255,32 @@ defaults instead of failing fast, for example:
 When `.auto` is active, the generated protocol also inherits `Proto.Metatype`
 (a marker protocol) so downstream tooling can distinguish Proto-managed
 protocols at the type level.
+
+### Property Setter Methods
+
+By default, get-only protocol properties in the mock receive a backing storage
+field and a setter method so tests can inject values without a custom handler:
+
+```swift
+// Generated for: var name: String { get }
+private var _nameValue: String?
+var name: String {
+    get { /* returns _nameValue or fails */ }
+}
+func setName(_ value: String) {
+    _nameValue = value
+}
+```
+
+- Setter methods are `async` when the getter has async effects (e.g. actor
+  isolation).
+- Properties that already have a setter in the protocol (`{ get set }`) are not
+  affected — the mock uses a regular stored property.
+- With `.mock(.auto)`, backing storage is initialized with the auto-default
+  value (e.g. `UserMock()`) and the guard/fail is omitted.
+- Use `.mock(.noPropertySetters)` to suppress setter method generation
+  entirely; get-only properties will use failure stubs or auto-defaults directly.
+- `@ProtoMockIgnored` on a property also suppresses its setter method.
 
 ### Sendable Mocks
 

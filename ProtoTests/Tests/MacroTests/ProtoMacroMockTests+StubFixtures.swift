@@ -35,10 +35,17 @@ extension ProtoMacroMockTests {
             }
 
             final class StoreMock: StoreProtocol {
+                private var _nameValue: String?
                 var name: String {
                     get {
-                        ProtoMockFailureHandling.fail("Unstubbed property 'name' on StoreMock")
+                        guard let value = _nameValue else {
+                            ProtoMockFailureHandling.fail("Unstubbed property 'name' on StoreMock")
+                        }
+                        return value
                     }
+                }
+                func setName(_ value: String) {
+                    _nameValue = value
                 }
                 var count: Int {
                     get {

@@ -20,6 +20,7 @@ enum MockGenerator {
         let requiresUncheckedSendable: Bool
         let requiresSynchronizedState: Bool
         let mockAutoDefault: Bool
+        let mockPropertySetters: Bool
         let genericParameterClause: GenericParameterClauseSyntax?
         let genericWhereClause: GenericWhereClauseSyntax?
         let isActorType: Bool
@@ -128,6 +129,7 @@ enum MockGenerator {
         in context: GenerationContext,
         state: inout GenerationState
     ) {
+        let ignored = MemberExtractor.hasProtoMockIgnored(variableDecl.attributes)
         // context: nil — diagnostics were already emitted during protocol generation
         let protocolVariables = ProtocolGenerator.protocolVariables(
             from: variableDecl,
@@ -144,16 +146,17 @@ enum MockGenerator {
             )
         }
 
+        let effectivePropertySetters = ignored ? false : context.mockPropertySetters
         for transformed in transformedVariables {
-            if let propertyStub = renderPropertyStub(
+            let propertyStubs = renderPropertyStub(
                 transformed,
                 mockName: context.mockName,
                 visibilityKeyword: context.visibilityKeyword,
                 mockIsActor: context.mockIsActor,
-                mockAutoDefault: context.mockAutoDefault
-            ) {
-                state.memberImplDecls.append(propertyStub)
-            }
+                mockAutoDefault: context.mockAutoDefault,
+                mockPropertySetters: effectivePropertySetters
+            )
+            state.memberImplDecls.append(contentsOf: propertyStubs)
         }
     }
 

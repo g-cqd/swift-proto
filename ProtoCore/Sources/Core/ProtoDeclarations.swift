@@ -224,6 +224,23 @@ public struct ProtoMockOption {
     public static var auto: Self {
         Self()
     }
+
+    /// Generate setter methods for get-only properties (the default).
+    ///
+    /// When a protocol property has no setter (e.g. `{ get }` or `{ get async }`),
+    /// the mock generates a `setPropertyName(_ value:)` method backed by private storage.
+    /// Setter methods are `async` when the getter has async effects (actor isolation).
+    public static var propertySetters: Self {
+        Self()
+    }
+
+    /// Suppress setter method generation for get-only properties.
+    ///
+    /// Get-only properties will use failure stubs or auto-defaults directly,
+    /// without backing storage or setter methods.
+    public static var noPropertySetters: Self {
+        Self()
+    }
 }
 
 /// Option type for configuring the `@ProtoMember` macro.
